@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Care - URA Networks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    :root {
+      --primary-color: #ffd700;
+      --secondary-color: #42e695;
+      --tertiary-color: #dd2476;
+      --background-tint: rgba(255, 255, 255, 0.1);
+      --border-tint: rgba(255, 255, 255, 0.2);
+    }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: url('https://files.catbox.moe/sk5d92.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #e0e0e0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .overlay {
+      background: var(--background-tint);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border-tint);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 650px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.95);}
+      to {opacity: 1; transform: scale(1);}
+    }
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, var(--primary-color), #ffcc33);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 600;
+    }
+    h2 {
+      font-size: 24px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+    .input-box, textarea {
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: 1px solid var(--border-tint);
+      border-radius: 12px;
+      outline: none;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+    .input-box:focus, textarea:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 8px rgba(255,215,0,0.5);
+    }
+    .input-box::placeholder, textarea::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--secondary-color), #3bb2b8);
+      color: #111;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      letter-spacing: 0.5px;
+    }
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(66, 230, 149, 0.4);
+    }
+    .admin-btn {
+      background: linear-gradient(135deg, #ff512f, var(--tertiary-color));
+    }
+    .admin-btn:hover {
+      box-shadow: 0 5px 15px rgba(255, 81, 47, 0.4);
+    }
+    #replySection, #adminSection {
+      margin-top: 25px;
+      text-align: left;
+    }
+    .mail-box {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 15px;
+      margin: 15px 0;
+      animation: slideUp 0.5s ease-in-out;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    @keyframes slideUp {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    .mail-box div {
+      margin-bottom: 8px;
+    }
+    .user-msg { color: #f0f0f0; }
+    .ura-reply { color: var(--primary-color); font-weight: 500; }
+    .ura-reply strong { color: white; }
+    .custom-alert {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      box-shadow: 0 0 15px rgba(255,215,0,0.7);
+      display: none;
+      animation: fadeDown 0.5s ease;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    }
+    @keyframes fadeDown {
+      from {opacity: 0; transform: translate(-50%,-20px);}
+      to {opacity: 1; transform: translate(-50%,0);}
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      backdrop-filter: blur(5px);
+    }
+    .modal-content {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      animation: fadeIn 0.5s ease;
+    }
+    .modal-content h2 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-size: 26px;
+    }
+    .close-btn {
+      margin-top: 15px;
+      background: #444;
+      color: #f0f0f0;
+    }
+    .reply-input {
+      width: calc(100% - 20px);
+      margin-top: 10px;
+      border-radius: 10px;
+      padding: 10px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    /* Loader for when mails are loading */
+    .loader {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="userSection">
+    <h1>📩 Customer Care</h1>
+    <input id="username" class="input-box" type="text" placeholder="Enter your Username">
+    <textarea id="message" class="input-box" placeholder="Describe your problem..."></textarea>
+    <button onclick="sendMail()">Send Message</button>
+    <button class="admin-btn" onclick="openAdminModal()">Admin Access</button>
+    <p id="status"></p>
+
+    <h2 style="margin-top:20px;">📨 Your Mailbox(Click Here)</h2>
+    <div class="loader" id="mailLoader"></div>
+    <div id="replySection"></div>
+  </div>
+
+  <div class="modal" id="adminModal">
+    <div class="modal-content">
+      <h2>🔑 Enter Admin Key</h2>
+      <input type="password" id="adminKey" class="input-box" placeholder="Admin Key">
+      <button onclick="checkAdminKey()">Login</button>
+      <button class="close-btn" onclick="closeAdminModal()">Close</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="adminSection" style="display:none;">
+    <h1>👑 URA Admin Panel</h1>
+    <div class="loader" id="adminLoader"></div>
+    <div id="allMails"></div>
+  </div>
+
+  <div class="custom-alert" id="customAlert"></div>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyA5FgwyJpsNBTpK6hU0TuJni0duOdULI5M",
+    authDomain: "advanced-pri-norw123.firebaseapp.com",
+    databaseURL: "https://advanced-pri-norw123-default-rtdb.firebaseio.com",
+    projectId: "advanced-pri-norw123",
+    storageBucket: "advanced-pri-norw123.firebasestorage.app",
+    messagingSenderId: "772396412620",
+    appId: "1:772396412620:web:9b4664b473abc075e69c69"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const validUsers = ["utkarshx","ayush@5926","saumy","ayush@558","s","arpit","o","gg","kk","vlc179","h","m","ayush@559","romitverma","cv","ff","ij","jj","csk","bb","arman@45","main","yyt","uu"];
+
+  function normalize(u){ return u.toLowerCase().trim(); }
+  function showAlert(msg){
+    const alertBox = document.getElementById("customAlert");
+    alertBox.innerText = msg;
+    alertBox.style.display = "block";
+    setTimeout(()=>{ alertBox.style.display="none"; },3000);
+  }
+
+  let currentUser = null;
+  let userReplyListener = null;
+
+  function attachUserReplyListener(user) {
+    if (userReplyListener) db.ref("mails").off("value", userReplyListener);
+    
+    document.getElementById("mailLoader").style.display = "block";
+    const replyDiv = document.getElementById("replySection");
+    replyDiv.innerHTML = "";
+
+    userReplyListener = db.ref("mails").orderByChild("username").equalTo(user).on("value", (snapshot) => {
+      document.getElementById("mailLoader").style.display = "none";
+      replyDiv.innerHTML = "";
+      if (!snapshot.exists()) {
+        replyDiv.innerHTML = "<p>No messages yet.</p>";
+        return;
+      }
+      snapshot.forEach(child => {
+        const data = child.val();
+        const box = document.createElement("div");
+        box.className = "mail-box";
+        box.innerHTML = `
+          <div class="user-msg">✉️ <strong>You:</strong> ${data.message}</div>
+          <div class="ura-reply">👑 <strong>URA NETWORK TEAM:</strong><br> ${data.reply || "<i>Waiting for reply...</i>"}</div>
+        `;
+        replyDiv.appendChild(box);
+      });
+    }, (error) => {
+      document.getElementById("mailLoader").style.display = "none";
+      console.error("Firebase fetch error:", error);
+      showAlert("An error occurred while fetching messages.");
+    });
+  }
+
+  function sendMail(){
+    const user = document.getElementById("username").value.trim();
+    const msg = document.getElementById("message").value.trim();
+    if (!user || !msg){ showAlert("⚠️ Please fill all fields"); return; }
+    if (!validUsers.includes(normalize(user))){ showAlert("❌ Invalid Username"); return; }
+    currentUser = normalize(user);
+    const newMail = db.ref("mails").push();
+    newMail.set({ username: currentUser, message: msg, reply: "", timestamp: firebase.database.ServerValue.TIMESTAMP })
+    .then(()=>{
+      showAlert("✅ Message sent!");
+      document.getElementById("message").value = "";
+      attachUserReplyListener(currentUser);
+    }).catch(error => {
+      console.error("Error sending message:", error);
+      showAlert("Failed to send message. Please try again.");
+    });
+  }
+
+  document.getElementById("username").addEventListener("blur", () => {
+    const user = document.getElementById("username").value.trim();
+    if (validUsers.includes(normalize(user))) {
+      currentUser = normalize(user);
+      attachUserReplyListener(currentUser);
+    }
+  });
+
+  // --- Admin Modal ---
+  function openAdminModal(){ document.getElementById("adminModal").style.display="flex"; }
+  function closeAdminModal(){ document.getElementById("adminModal").style.display="none"; }
+
+  function checkAdminKey(){
+    const key = document.getElementById("adminKey").value.trim();
+    if(key === "Utkarsh225"){
+      showAlert("✅ Admin Access Granted");
+      document.getElementById("adminModal").style.display="none";
+      document.getElementById("userSection").style.display="none";
+      document.getElementById("adminSection").style.display="block";
+      loadAllMails();
+    } else {
+      showAlert("❌ Wrong Key!");
+    }
+  }
+
+  // --- Admin Panel ---
+  function loadAllMails(){
+    const allDiv = document.getElementById("allMails");
+    document.getElementById("adminLoader").style.display = "block";
+    
+    db.ref("mails").on("value", (snap)=>{
+      document.getElementById("adminLoader").style.display = "none";
+      allDiv.innerHTML = "";
+      if (!snap.exists()) {
+          allDiv.innerHTML = "<p>No messages in the queue.</p>";
+          return;
+      }
+      snap.forEach(child => {
+        const key = child.key;
+        const data = child.val();
+        const box = document.createElement("div");
+        box.className = "mail-box";
+        box.innerHTML = `
+          <div><strong>User:</strong> ${data.username}</div>
+          <div><strong>Message:</strong> ${data.message}</div>
+          <div><strong>Reply:</strong> ${data.reply || "<i>No reply yet</i>"}</div>
+          <textarea class="reply-input" id="reply-${key}" placeholder="Type reply..."></textarea>
+          <button onclick="sendReply('${key}')">Send Reply</button>
+        `;
+        allDiv.appendChild(box);
+      });
+    }, (error) => {
+        document.getElementById("adminLoader").style.display = "none";
+        console.error("Firebase fetch error:", error);
+        showAlert("An error occurred loading admin mails.");
+    });
+  }
+
+  function sendReply(mailId){
+    const reply = document.getElementById("reply-" + mailId).value.trim();
+    if(!reply){ showAlert("⚠️ Reply cannot be empty"); return; }
+    db.ref("mails/" + mailId + "/reply").set(reply)
+    .then(()=>{
+      showAlert("✅ Reply Sent!");
+      document.getElementById("reply-" + mailId).value = "";
+    })
+    .catch(error => {
+      console.error("Error sending reply:", error);
+      showAlert("Failed to send reply. Please try again.");
+    });
+  }
+</script>
+</body>
+</html>
