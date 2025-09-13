@@ -105,6 +105,13 @@
     .admin-btn:hover {
       box-shadow: 0 5px 15px rgba(255, 81, 47, 0.4);
     }
+    .mailbox-btn {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        margin-top: 20px;
+    }
+    .mailbox-btn:hover {
+        box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+    }
     #replySection, #adminSection {
       margin-top: 25px;
       text-align: left;
@@ -213,11 +220,12 @@
     <h1>📩 Customer Care</h1>
     <input id="username" class="input-box" type="text" placeholder="Enter your Username">
     <textarea id="message" class="input-box" placeholder="Describe your problem..."></textarea>
-    <button onclick="sendMail()">Send Message</button>
-    <button class="admin-btn" onclick="openAdminModal()">Admin Access</button>
+    <button onclick="sendMail()">Sᴇɴᴛ ᴍᴇssᴀɢᴇ </button>
+    <button class="admin-btn" onclick="openAdminModal()">ᗩᗪᗰIᑎ ᗩᑕᑕEᔕᔕ</button>
     <p id="status"></p>
 
-    <h2 style="margin-top:20px;">📨 Your Mailbox(Click Here)</h2>
+    <button class="mailbox-btn" onclick="openUserModal()">YOᑌᖇ ᗰᗩIᒪ ᗷO᙭</button>
+
     <div class="loader" id="mailLoader"></div>
     <div id="replySection"></div>
   </div>
@@ -226,8 +234,17 @@
     <div class="modal-content">
       <h2>🔑 Enter Admin Key</h2>
       <input type="password" id="adminKey" class="input-box" placeholder="Admin Key">
-      <button onclick="checkAdminKey()">Login</button>
-      <button class="close-btn" onclick="closeAdminModal()">Close</button>
+      <button onclick="checkAdminKey()">ᒪOGIᑎ</button>
+      <button class="close-btn" onclick="closeAdminModal()">Ｃｌｏｓｅ</button>
+    </div>
+  </div>
+
+  <div class="modal" id="userModal">
+    <div class="modal-content">
+      <h2>Please Enter Your Username</h2>
+      <input type="text" id="userModalUsername" class="input-box" placeholder="Your Username">
+      <button onclick="processUserLogin()">OᑭEᑎ ᗰᗩIᒪ ᑎOTIᖴIᑕᗩTIOᑎ</button>
+      <button class="close-btn" onclick="closeUserModal()">Ｃｌｏｓｅ</button>
     </div>
   </div>
 
@@ -300,8 +317,8 @@
   function sendMail(){
     const user = document.getElementById("username").value.trim();
     const msg = document.getElementById("message").value.trim();
-    if (!user || !msg){ showAlert("⚠️ Please fill all fields"); return; }
-    if (!validUsers.includes(normalize(user))){ showAlert("❌ Invalid Username"); return; }
+    if (!user || !msg){ showAlert("⚠️ Pʟᴇᴀsᴇ Fɪʟʟ Aʟʟ Fɪᴇʟᴅs"); return; }
+    if (!validUsers.includes(normalize(user))){ showAlert("❌ Ｉｎｖａｌｉｄ Ｕｓｅｒｎａｍｅ "); return; }
     currentUser = normalize(user);
     const newMail = db.ref("mails").push();
     newMail.set({ username: currentUser, message: msg, reply: "", timestamp: firebase.database.ServerValue.TIMESTAMP })
@@ -311,7 +328,7 @@
       attachUserReplyListener(currentUser);
     }).catch(error => {
       console.error("Error sending message:", error);
-      showAlert("Failed to send message. Please try again.");
+      showAlert("Failed to send message. try again.");
     });
   }
 
@@ -322,6 +339,34 @@
       attachUserReplyListener(currentUser);
     }
   });
+
+  // --- Functions for the new custom user modal ---
+  function openUserModal() {
+    document.getElementById("userModal").style.display = "flex";
+  }
+
+  function closeUserModal() {
+    document.getElementById("userModal").style.display = "none";
+    document.getElementById("userModalUsername").value = "";
+  }
+  
+  function processUserLogin() {
+    const user = document.getElementById("userModalUsername").value.trim();
+    if (!user) {
+      showAlert("⚠️ Please Enter a username.");
+      return;
+    }
+    const normalizedUser = normalize(user);
+    if (!validUsers.includes(normalizedUser)) {
+      showAlert("❌ Ｉｎｖａｌｉｄ Ｕｓｅｒｎａｍｅ ");
+      return;
+    }
+    document.getElementById("username").value = user; // Prefill the username field
+    currentUser = normalizedUser;
+    attachUserReplyListener(currentUser);
+    showAlert("Loading your messages...");
+    closeUserModal();
+  }
 
   // --- Admin Modal ---
   function openAdminModal(){ document.getElementById("adminModal").style.display="flex"; }
